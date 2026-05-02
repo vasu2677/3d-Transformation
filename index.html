@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FORMA · 3D Transformations</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+
+  <!-- Three.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- OrbitControls via importmap shim -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ─── CUSTOM CURSOR ─── -->
+  <div id="cursor-ring"></div>
+  <div id="cursor-dot"></div>
+
+  <!-- ─── LOADER ─── -->
+  <div id="loader">
+    <div class="loader-inner">
+      <div class="loader-bar"><span></span></div>
+      <p class="loader-label mono">Initialising scene…</p>
+    </div>
+  </div>
+
+  <!-- ─── NAV ─── -->
+  <nav id="nav">
+    <a href="#hero" class="nav-logo">FORMA</a>
+    <ul class="nav-links">
+      <li><a href="#hero"    data-section="0">Home</a></li>
+      <li><a href="#shapes"  data-section="1">Shapes</a></li>
+      <li><a href="#controls" data-section="2">Controls</a></li>
+      <li><a href="#theory"  data-section="3">Theory</a></li>
+      <li><a href="#summary" data-section="4">Summary</a></li>
+    </ul>
+    <div class="nav-indicator"></div>
+  </nav>
+
+  <!-- ═══════════════════════════════════════════
+       SECTION 0 — HERO
+  ══════════════════════════════════════════════ -->
+  <section id="hero" class="section s-hero">
+    <div class="hero-bg-canvas" id="heroBg"></div>
+    <div class="hero-content">
+      <p class="hero-kicker mono reveal-up">Three.js · 3D Mathematics · Interactive</p>
+      <h1 class="hero-title">
+        <span class="reveal-up delay-1">FORMA</span>
+      </h1>
+      <p class="hero-subtitle reveal-up delay-2">
+        Explore three-dimensional transformations<br/>
+        through geometry, interaction &amp; motion.
+      </p>
+      <a href="#shapes" class="hero-cta reveal-up delay-3">
+        <span>Begin</span>
+        <svg viewBox="0 0 24 24"><path d="M12 4v16m8-8-8 8-8-8"/></svg>
+      </a>
+    </div>
+    <div class="scroll-hint mono">scroll</div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       SECTION 1 — SHAPES SHOWCASE
+  ══════════════════════════════════════════════ -->
+  <section id="shapes" class="section s-shapes">
+    <div class="section-label mono">01 / shapes</div>
+    <div class="shapes-layout">
+      <div class="shapes-text">
+        <h2 class="section-title animate-in">Primitive<br/>Geometries</h2>
+        <p class="section-body animate-in">
+          Three.js provides built-in geometry constructors for every standard
+          primitive — from simple boxes to complex polyhedra. Choose a shape
+          below to load it into the interactive scene.
+        </p>
+        <div class="shape-picker animate-in">
+          <button class="shape-btn active" data-shape="cube">Cube</button>
+          <button class="shape-btn" data-shape="sphere">Sphere</button>
+          <button class="shape-btn" data-shape="torus">Torus</button>
+          <button class="shape-btn" data-shape="cone">Cone</button>
+          <button class="shape-btn" data-shape="dodecahedron">Dodecahedron</button>
+          <button class="shape-btn" data-shape="cylinder">Cylinder</button>
+        </div>
+        <p class="shape-description mono animate-in" id="shapeDesc">
+          BoxGeometry(1,1,1) — 6 faces, 8 vertices, 12 triangles.
+        </p>
+      </div>
+      <div class="shapes-canvas-wrap">
+        <canvas id="mainCanvas"></canvas>
+        <div class="canvas-overlay-label mono" id="canvasShapeLabel">CUBE</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       SECTION 2 — TRANSFORMATION CONTROLS
+  ══════════════════════════════════════════════ -->
+  <section id="controls" class="section s-controls">
+    <div class="section-label mono">02 / transform</div>
+    <div class="controls-layout">
+      <div class="controls-canvas-wrap">
+        <!-- reuses same canvas via reference — shown via JS -->
+        <div class="controls-canvas-mirror" id="controlsMirror"></div>
+      </div>
+      <div class="controls-panel animate-in">
+        <h2 class="section-title">Transform<br/>Controls</h2>
+        <p class="section-body">
+          Manipulate the active shape in real time using the sliders below.
+          All three transformation types — translation, rotation, and scale —
+          can be combined simultaneously.
+        </p>
+
+        <!-- Render mode + color -->
+        <div class="ctrl-row">
+          <div class="ctrl-group">
+            <label class="ctrl-label mono">Render Mode</label>
+            <div class="toggle-group">
+              <button class="toggle-btn active" id="btnSolid">Solid</button>
+              <button class="toggle-btn" id="btnWire">Wireframe</button>
+            </div>
+          </div>
+          <div class="ctrl-group">
+            <label class="ctrl-label mono">Colour</label>
+            <input type="color" id="colorPicker" value="#00f5c4" class="color-wheel" />
+          </div>
+        </div>
+
+        <!-- Translation -->
+        <div class="ctrl-section">
+          <p class="ctrl-section-title mono">Translation</p>
+          <div class="slider-row">
+            <label class="mono">X</label>
+            <input type="range" min="-3" max="3" step="0.01" value="0" id="tx" />
+            <span class="val mono" id="txVal">0.00</span>
+          </div>
+          <div class="slider-row">
+            <label class="mono">Y</label>
+            <input type="range" min="-3" max="3" step="0.01" value="0" id="ty" />
+            <span class="val mono" id="tyVal">0.00</span>
+          </div>
+          <div class="slider-row">
+            <label class="mono">Z</label>
+            <input type="range" min="-3" max="3" step="0.01" value="0" id="tz" />
+            <span class="val mono" id="tzVal">0.00</span>
+          </div>
+        </div>
+
+        <!-- Rotation -->
+        <div class="ctrl-section">
+          <p class="ctrl-section-title mono">Rotation (°)</p>
+          <div class="slider-row">
+            <label class="mono">X</label>
+            <input type="range" min="-180" max="180" step="1" value="0" id="rx" />
+            <span class="val mono" id="rxVal">0°</span>
+          </div>
+          <div class="slider-row">
+            <label class="mono">Y</label>
+            <input type="range" min="-180" max="180" step="1" value="0" id="ry" />
+            <span class="val mono" id="ryVal">0°</span>
+          </div>
+          <div class="slider-row">
+            <label class="mono">Z</label>
+            <input type="range" min="-180" max="180" step="1" value="0" id="rz" />
+            <span class="val mono" id="rzVal">0°</span>
+          </div>
+        </div>
+
+        <!-- Scale -->
+        <div class="ctrl-section">
+          <p class="ctrl-section-title mono">Scale</p>
+          <div class="slider-row">
+            <label class="mono">X</label>
+            <input type="range" min="0.1" max="3" step="0.01" value="1" id="sx" />
+            <span class="val mono" id="sxVal">1.00</span>
+          </div>
+          <div class="slider-row">
+            <label class="mono">Y</label>
+            <input type="range" min="0.1" max="3" step="0.01" value="1" id="sy" />
+            <span class="val mono" id="syVal">1.00</span>
+          </div>
+          <div class="slider-row">
+            <label class="mono">Z</label>
+            <input type="range" min="0.1" max="3" step="0.01" value="1" id="sz" />
+            <span class="val mono" id="szVal">1.00</span>
+          </div>
+        </div>
+
+        <button class="reset-btn mono" id="resetBtn">↺  Reset All</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       SECTION 3 — THEORY
+  ══════════════════════════════════════════════ -->
+  <section id="theory" class="section s-theory">
+    <div class="section-label mono">03 / theory</div>
+    <h2 class="section-title centered animate-in">The Mathematics<br/>of 3D Space</h2>
+    <div class="theory-grid">
+
+      <div class="theory-card animate-in">
+        <div class="theory-icon">T</div>
+        <h3>Translation</h3>
+        <p>
+          Moving an object along one or more axes. In Three.js, <code>position.x/y/z</code>
+          define where the object sits in world-space. Mathematically, translation adds
+          a vector <em>(tx, ty, tz)</em> to every vertex of the mesh.
+        </p>
+        <div class="theory-matrix mono">
+          [1 0 0 tx]<br/>
+          [0 1 0 ty]<br/>
+          [0 0 1 tz]<br/>
+          [0 0 0  1]
+        </div>
+      </div>
+
+      <div class="theory-card animate-in delay-1">
+        <div class="theory-icon">R</div>
+        <h3>Rotation</h3>
+        <p>
+          Spinning an object around an axis by an angle θ. Three.js stores rotations
+          as Euler angles (<code>rotation.x/y/z</code>) or quaternions internally.
+          Each axis has its own rotation matrix.
+        </p>
+        <div class="theory-matrix mono">
+          Rz = [cosθ -sinθ 0]<br/>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[sinθ  cosθ 0]<br/>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ 0     0   1]
+        </div>
+      </div>
+
+      <div class="theory-card animate-in delay-2">
+        <div class="theory-icon">S</div>
+        <h3>Scale</h3>
+        <p>
+          Stretching or shrinking an object along each axis. A uniform scale factor
+          preserves proportions; non-uniform scale distorts the mesh.
+          In Three.js: <code>scale.x/y/z</code>.
+        </p>
+        <div class="theory-matrix mono">
+          [sx  0  0 0]<br/>
+          [ 0 sy  0 0]<br/>
+          [ 0  0 sz 0]<br/>
+          [ 0  0  0 1]
+        </div>
+      </div>
+
+      <div class="theory-card animate-in delay-3">
+        <div class="theory-icon">M</div>
+        <h3>Model Matrix</h3>
+        <p>
+          The final model matrix combines all three transforms: <em>M = T × R × S</em>.
+          Three.js computes this automatically every frame from the object's position,
+          rotation, and scale properties.
+        </p>
+        <div class="theory-matrix mono">
+          M = T · R · S<br/>
+          (4×4 homogeneous<br/>
+          &nbsp;matrix)
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       SECTION 4 — SUMMARY
+  ══════════════════════════════════════════════ -->
+  <section id="summary" class="section s-summary">
+    <div class="section-label mono">04 / summary</div>
+    <div class="summary-layout">
+      <div class="summary-text animate-in">
+        <h2 class="section-title">Built with<br/>Three.js</h2>
+        <p class="section-body">
+          This demo showcases the foundations of real-time 3D graphics on the web —
+          geometry, materials, lighting, camera transforms, and user interaction —
+          all powered by WebGL through the Three.js abstraction layer.
+        </p>
+        <ul class="summary-list mono">
+          <li>✦  WebGLRenderer with antialiasing</li>
+          <li>✦  PerspectiveCamera + OrbitControls</li>
+          <li>✦  MeshStandardMaterial (PBR lighting)</li>
+          <li>✦  AxesHelper for coordinate reference</li>
+          <li>✦  Real-time transform manipulation</li>
+          <li>✦  Wireframe / solid toggle</li>
+          <li>✦  Dynamic colour via colour picker</li>
+        </ul>
+      </div>
+      <div class="summary-shapes animate-in">
+        <div class="sum-shape s1"></div>
+        <div class="sum-shape s2"></div>
+        <div class="sum-shape s3"></div>
+        <p class="mono summary-credit">FORMA · 3D Transformations Explorer</p>
+      </div>
+    </div>
+  </section>
+
+  <script src="script.js"></script>
+</body>
+</html>
